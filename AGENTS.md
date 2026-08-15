@@ -21,6 +21,28 @@ Proyecto: Omarchy Assistant. **Idioma del proyecto: español.** Todos los artefa
 5. Esperar la validación del usuario.
 6. Consolidar con `/solved` solo después de la validación.
 
+## Contexto bajo demanda (context discipline)
+
+- No recorrer ni pre-cargar el repositorio al iniciar una sesión: partir del contexto mínimo (este archivo, perfil de la máquina actual, `git status` y la skill directamente relevante).
+- Preferir `búsqueda → lectura dirigida` sobre lecturas recursivas.
+- `knowledge/` es contexto histórico bajo demanda: buscar con `rg` y leer solo los resultados relevantes. Nunca recorrerlo completo, ni en diagnóstico ni en `/solved`.
+- `bootstrap.sh` y los scripts de infraestructura (`scripts/rollback`, `scripts/doctor`, `scripts/verify`) se leen solo cuando la tarea los afecta directamente; para validar basta con ejecutarlos.
+- No leer perfiles de otras máquinas salvo comparación de comportamiento, migración entre equipos o regla compartida.
+- Durante `/solved`, trabajar sobre el delta de la sesión (`git status`, `git diff`, `chezmoi status`/`diff`), no sobre el estado completo del repositorio.
+
+### Routing por componente
+
+| Tarea | Leer | No leer |
+|---|---|---|
+| Fish | configuración Fish relevante, referencia de la skill, knowledge buscado | bootstrap, monitores, otros perfiles |
+| Starship | `starship.toml`, integración Fish solo si afecta el prompt | resto del repositorio |
+| Hyprland / monitores | config Hyprland involucrada, perfil actual, knowledge buscado | Fish, Starship, bootstrap |
+| Paquetes / instalación | manifiesto relevante, perfil actual; `bootstrap.sh` solo si el paquete depende de su lógica | componentes no relacionados |
+
+### Niveles de contexto
+
+Escalar solo cuando la tarea lo requiera: Core (AGENTS.md, máquina actual, git status) → Task (archivo y skill involucrados) → Historical (knowledge buscado) → Infrastructure (bootstrap, rollback, doctor, scripts).
+
 ## Capas de chezmoi (orden obligatorio)
 
 ```text

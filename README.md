@@ -33,7 +33,7 @@ omarchy-assistant/
 ├── bootstrap.sh
 ├── .chezmoiroot
 ├── .gitignore
-├── OMARCHY_ASSISTANT_INITIAL_SPEC.md
+├── OPENCODE_OMARCHY_ASSISTANT_V0.2_CONTEXT_OPTIMIZATION.md
 ├── home/
 │   ├── common/                     # capa común (todos los equipos)
 │   ├── omarchy/                    # capa de ajustes de Omarchy
@@ -107,6 +107,10 @@ Mientras no ejecutes `/solved`, los cambios NO son estado validado. Puedes crear
 
 `/solved` consolida: inspecciona, clasifica el scope, actualiza el desired state con chezmoi, registra paquetes, documenta en `knowledge/solved/`, verifica, hace commit pequeño y push si hay remote.
 
+## Contexto bajo demanda
+
+OpenCode no recorre ni pre-carga el repositorio al iniciar una sesión: parte del contexto mínimo (instrucciones, perfil de la máquina actual y `git status`). `knowledge/` se consulta bajo demanda con `rg` (search-before-read) cuando la tarea tiene antecedentes; `bootstrap.sh` y los scripts de infraestructura se leen solo cuando la tarea los afecta directamente. `/solved` trabaja sobre el delta de la sesión (`git status`, `git diff`, `chezmoi status`/`diff`), no sobre el estado completo del repositorio.
+
 ## Bootstrap
 
 ```bash
@@ -162,4 +166,4 @@ daemon, fleet management, TUI, GUI, API, servidor web, base de datos, telemetrí
 
 ## Especificación
 
-La especificación completa está en [`OMARCHY_ASSISTANT_INITIAL_SPEC.md`](OMARCHY_ASSISTANT_INITIAL_SPEC.md).
+La especificación vigente está en [`OPENCODE_OMARCHY_ASSISTANT_V0.2_CONTEXT_OPTIMIZATION.md`](OPENCODE_OMARCHY_ASSISTANT_V0.2_CONTEXT_OPTIMIZATION.md).
