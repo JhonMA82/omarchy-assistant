@@ -1,0 +1,3 @@
+# Manifiesto de paquetes — clase "desktop".
+# Formato: un paquete por línea, repos oficiales de pacman; AUR fuera de alcance.
+# Se mantiene vacío hasta que exista una necesidad concreta.

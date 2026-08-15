@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# scripts/doctor — Diagnóstico de SOLO LECTURA del entorno.
+# Solo muestra información útil; nunca modifica nada y siempre termina con
+# exit 0, usando fallbacks elegantes cuando un dato no está disponible.
+#
+# Uso:
+#   scripts/doctor [--profile NOMBRE] [--class desktop|laptop]
+set -u
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --- Resolución de perfil (misma lógica que bootstrap.sh y scripts/verify,
+# --- con fallback "(sin resolver)" en lugar de error) ---
+PROFILE_ARG=""
+CLASS_ARG=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --profile) PROFILE_ARG="${2:-}"; shift 2 2>/dev/null || true ;;
+    --class) CLASS_ARG="${2:-}"; shift 2 2>/dev/null || true ;;
+    *) shift ;;
+  esac
+done
+
+profile="${OMARCHY_PROFILE:-}"
+if [ -n "$PROFILE_ARG" ]; then profile="$PROFILE_ARG"; fi
+if [ -z "$profile" ]; then profile="$(hostname 2>/dev/null || echo desconocido)"; fi
+
+machine_dir="$REPO_DIR/home/profiles/machines/$profile"
+class=""
+if [ -f "$machine_dir/dot_config/omarchy-assistant/class" ]; then
+  class="$(sed -n '1{s/^[[:space:]]*//;s/[[:space:]]*$//;p}' "$machine_dir/dot_config/omarchy-assistant/class" 2>/dev/null || true)"
+fi
+if [ -z "$class" ]; then class="$CLASS_ARG"; fi
+if [ -z "$class" ]; then class="(sin resolver)"; fi
+
+layers="common → omarchy → profiles/$class"
+if [ -d "$machine_dir" ]; then
+  layers="$layers → profiles/machines/$profile"
+fi
+
+# --- Datos del entorno ---
+if grep -qi omarchy /etc/os-release 2>/dev/null; then
+  omarchy="detectado"
+else
+  omarchy="no detectado"
+fi
+
+if command -v chezmoi >/dev/null 2>&1; then
+  chezmoi_info="$(chezmoi --version 2>/dev/null || true)"
+  if [ -z "$chezmoi_info" ]; then chezmoi_info="versión desconocida"; fi
+else
+  chezmoi_info="no instalado"
+fi
+
+git_info="$(git --version 2>/dev/null || echo 'no instalado')"
+
+if command -v opencode >/dev/null 2>&1; then
+  opencode_info="$(opencode --version 2>/dev/null || echo 'versión desconocida')"
+else
+  opencode_info="no instalado"
+fi
+
+branch="$(git -C "$REPO_DIR" branch --show-current 2>/dev/null || true)"
+if [ -z "$branch" ]; then branch="(sin rama)"; fi
+
+last_commit="$(git -C "$REPO_DIR" log -1 --oneline 2>/dev/null || true)"
+if [ -z "$last_commit" ]; then last_commit="sin commits"; fi
+
+status_count="$(git -C "$REPO_DIR" status --porcelain 2>/dev/null | wc -l)"
+
+remote="$(git -C "$REPO_DIR" remote 2>/dev/null | head -n 1 || true)"
+if [ -z "$remote" ]; then remote="sin remote"; fi
+
+# --- Salida ---
+printf '%s\n' \
+  "Omarchy Assistant Doctor" \
+  "========================" \
+  ""
+printf '  %-15s %s\n' "Hostname:" "$(hostname 2>/dev/null || echo desconocido)"
+printf '  %-15s %s\n' "Perfil:" "$profile"
+printf '  %-15s %s\n' "Clase:" "$class"
+printf '  %-15s %s\n' "Capas:" "$layers"
+printf '  %-15s %s\n' "Omarchy:" "$omarchy"
+printf '  %-15s %s\n' "Chezmoi:" "$chezmoi_info"
+printf '  %-15s %s\n' "Git:" "$git_info"
+printf '  %-15s %s\n' "OpenCode:" "$opencode_info"
+printf '  %-15s %s\n' "Shell:" "${SHELL:-desconocido}"
+printf '  %-15s %s\n' "Rama:" "$branch"
+printf '  %-15s %s\n' "Último commit:" "$last_commit"
+printf '  %-15s %s\n' "Working tree:" "$status_count archivo(s) con cambios"
+printf '  %-15s %s\n' "Remote:" "$remote"
+
+exit 0

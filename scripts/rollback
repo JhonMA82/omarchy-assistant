@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+# scripts/rollback — Retrocede un componente al estado registrado en Git.
+#
+# Uso:
+#   scripts/rollback <componente>                        Retrocede al último commit (HEAD).
+#   scripts/rollback --commit <hash> <componente>        Retrocede a un commit concreto.
+#   scripts/rollback --dry-run [--commit <hash>] <componente>
+#                                                        Muestra qué cambiaría sin cambiar nada.
+#
+# Restore (distinto de rollback): descartar cambios experimentales SIN consolidar:
+#   git checkout -- <rutas>
+#   chezmoi apply --source <repo>/home/<capa>   # reaplica cada capa en orden
+#
+# El rollback solo toca los archivos del componente indicado; nunca modifica
+# componentes ajenos.
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --- Tabla de componentes -> patrones de rutas bajo el repo ---
+# Globs del árbol de trabajo (incluyen archivos nuevos sin trackear).
+component_patterns() {
+  case "$1" in
+    fish)     printf '%s\n' 'home/**/dot_config/fish/**' ;;
+    starship) printf '%s\n' 'home/**/starship*' ;;
+    ghostty)  printf '%s\n' 'home/**/dot_config/ghostty/**' ;;
+    hypr)     printf '%s\n' 'home/**/dot_config/hypr/**' ;;
+    # v4 Quattro sustituye waybar/walker por el shell Quickshell.
+    quickshell) printf '%s\n' 'home/**/dot_config/quickshell/**' 'home/**/dot_config/omarchy/**' ;;
+    git)      printf '%s\n' 'home/**/dot_config/git/**' 'home/**/dot_gitconfig*' ;;
+    opencode) printf '%s\n' 'home/**/dot_config/opencode/**' ;;
+    scripts)  printf '%s\n' 'scripts/**' ;;
+  esac
+}
+
+usage() {
+  cat <<'EOF'
+Uso:
+  scripts/rollback <componente>                        Retrocede al último commit (HEAD).
+  scripts/rollback --commit <hash> <componente>        Retrocede a un commit concreto.
+  scripts/rollback --dry-run [--commit <hash>] <componente>
+                                                       Muestra qué cambiaría sin cambiar nada.
+
+Componentes conocidos:
+  fish  starship  ghostty  hypr  quickshell  git  opencode  scripts
+
+Restore (descartar cambios experimentales SIN consolidar, distinto de rollback):
+  git checkout -- <rutas>
+  chezmoi apply --source <repo>/home/<capa>   # reaplica cada capa en orden
+
+El rollback solo toca los archivos del componente indicado; nunca modifica
+componentes ajenos.
+EOF
+}
+
+# --- Parseo de argumentos ---
+DRY_RUN=0
+COMMIT_REF=""
+COMPONENT=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help|-h) usage; exit 0 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --commit) COMMIT_REF="${2:-}"; shift 2 2>/dev/null || true ;;
+    -*) echo "Opción desconocida: $1" >&2; usage >&2; exit 1 ;;
+    *) COMPONENT="$1"; shift ;;
+  esac
+done
+
+if [ -z "$COMPONENT" ]; then
+  echo "Error: falta el componente." >&2
+  usage >&2
+  exit 1
+fi
+
+case "$COMPONENT" in
+  fish|starship|ghostty|hypr|quickshell|git|opencode|scripts) ;;
+  *)
+    echo "Error: componente desconocido «$COMPONENT»." >&2
+    echo "Componentes conocidos: fish starship ghostty hypr quickshell git opencode scripts" >&2
+    exit 1
+    ;;
+esac
+mapfile -t patterns < <(component_patterns "$COMPONENT")
+
+# --- Buscar archivos afectados en el árbol de trabajo (globs portátiles) ---
+shopt -s globstar nullglob
+found=()
+for pat in "${patterns[@]}"; do
+  for p in "$REPO_DIR"/$pat; do
+    if [ -f "$p" ]; then found+=("$p"); fi
+  done
+done
+shopt -u globstar nullglob
+
+if [ "${#found[@]}" -eq 0 ]; then
+  echo "No se encontraron archivos del componente «$COMPONENT» en el repositorio."
+  exit 0
+fi
+
+# Rutas relativas al repo (git las prefiere así).
+rel_paths=()
+for p in "${found[@]}"; do rel_paths+=("${p#"$REPO_DIR"/}"); done
+mapfile -t rel_paths < <(printf '%s\n' "${rel_paths[@]}" | sort -u)
+
+# --- Resolver la referencia: --commit <hash> o HEAD ---
+ref="${COMMIT_REF:-HEAD}"
+if ! git -C "$REPO_DIR" rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+  if [ "$ref" = "HEAD" ]; then
+    echo "Error: el repositorio aún no tiene commits; no hay nada a lo que retroceder." >&2
+  else
+    echo "Error: el commit «$ref» no existe." >&2
+  fi
+  exit 1
+fi
+
+# --- Dry-run: mostrar qué cambiaría sin cambiar nada ---
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "Dry-run: qué cambiaría al retroceder «$COMPONENT» a $ref:"
+  git -C "$REPO_DIR" diff "$ref" -- "${rel_paths[@]}" --stat || true
+  exit 0
+fi
+
+# --- Guarda: rechazar si hay cambios sin consolidar en archivos afectados ---
+dirty=()
+for p in "${rel_paths[@]}"; do
+  if [ -n "$(git -C "$REPO_DIR" status --porcelain -- "$p" 2>/dev/null)" ]; then
+    dirty+=("$p")
+  fi
+done
+if [ "${#dirty[@]}" -gt 0 ]; then
+  echo "Error: hay cambios sin consolidar en archivos del componente «$COMPONENT»:" >&2
+  printf '  %s\n' "${dirty[@]}" >&2
+  echo "Consolida la solución con /solved o descarta los cambios con restore:" >&2
+  echo "  git checkout -- <rutas>" >&2
+  echo "  chezmoi apply --source <repo>/home/<capa>   # reaplica cada capa en orden" >&2
+  exit 1
+fi
+
+# --- Restaurar solo los archivos que existen en la referencia ---
+ref_paths=()
+for p in "${rel_paths[@]}"; do
+  if git -C "$REPO_DIR" cat-file -e "$ref:$p" 2>/dev/null; then
+    ref_paths+=("$p")
+  fi
+done
+if [ "${#ref_paths[@]}" -eq 0 ]; then
+  echo "El componente «$COMPONENT» no tiene archivos registrados en $ref; no hay nada que restaurar."
+  exit 0
+fi
+
+git -C "$REPO_DIR" checkout "$ref" -- "${ref_paths[@]}"
+
+# --- Reaplicar SOLO los objetivos restaurados, por capa, en orden canónico ---
+# (common -> omarchy -> desktop|laptop -> machines/*). Reaplicar capas completas
+# sobrescribiría archivos ajenos al componente (p. ej. el marcador de perfil
+# dot_config/omarchy-assistant/profile), así que cada ruta restaurada se mapea
+# a su objetivo en $HOME y se aplica únicamente ese objetivo.
+apply_layers=()
+for p in "${ref_paths[@]}"; do
+  case "$p" in
+    home/common/*)               apply_layers+=("common") ;;
+    home/omarchy/*)              apply_layers+=("omarchy") ;;
+    home/profiles/desktop/*)     apply_layers+=("profiles/desktop") ;;
+    home/profiles/laptop/*)      apply_layers+=("profiles/laptop") ;;
+    home/profiles/machines/*/*)
+      tmp="${p#home/profiles/machines/}"
+      apply_layers+=("profiles/machines/${tmp%%/*}") ;;
+  esac
+done
+
+# Rango de capa para ordenar en orden canónico.
+layer_rank() {
+  case "$1" in
+    common) echo 0 ;;
+    omarchy) echo 1 ;;
+    profiles/desktop|profiles/laptop) echo 2 ;;
+    profiles/machines/*) echo 3 ;;
+    *) echo 9 ;;
+  esac
+}
+
+unique_layers=()
+for l in "${apply_layers[@]}"; do
+  dup=0
+  for u in "${unique_layers[@]}"; do
+    if [ "$u" = "$l" ]; then dup=1; fi
+  done
+  if [ "$dup" -eq 0 ]; then unique_layers+=("$l"); fi
+done
+
+sorted_layers="$(for l in "${unique_layers[@]}"; do printf '%s %s\n' "$(layer_rank "$l")" "$l"; done | sort -n | cut -d' ' -f2-)"
+
+# Mapea una ruta fuente relativa a la capa a su ruta objetivo en $HOME,
+# siguiendo la convención de chezmoi: atributos en el primer componente,
+# prefijo dot_ -> "." y sufijo .tmpl eliminado. Devuelve 1 si no hay objetivo.
+source_to_target() {
+  local rel="$1" first rest
+  first="${rel%%/*}"
+  if [ "$first" = "$rel" ]; then rest=""; else rest="${rel#*/}"; fi
+  # Prefijos de atributos encadenados (solo el primer componente los usa).
+  while [[ "$first" == run_* || "$first" == once_* || "$first" == before_* || \
+           "$first" == after_* || "$first" == create_* || "$first" == modify_* || \
+           "$first" == remove_* || "$first" == encrypted_* || \
+           "$first" == executable_* || "$first" == readonly_* || \
+           "$first" == private_* || "$first" == literal_* || \
+           "$first" == empty_* || "$first" == symlink_* ]]; do
+    first="${first#*_}"
+  done
+  if [[ "$first" == *.tmpl ]]; then first="${first%.tmpl}"; fi
+  if [[ "$first" == dot_* ]]; then first=".${first#dot_}"; fi
+  if [ -z "$first" ]; then return 1; fi
+  printf '%s\n' "$first${rest:+/$rest}"
+}
+
+if command -v chezmoi >/dev/null 2>&1; then
+  while IFS= read -r layer; do
+    [ -n "$layer" ] || continue
+    targets=()
+    has_script=0
+    for p in "${ref_paths[@]}"; do
+      [[ "$p" == home/"$layer"/* ]] || continue
+      rel="${p#home/$layer/}"
+      first="${rel%%/*}"
+      # Los scripts run_* no tienen objetivo: se reaplica la capa completa.
+      if [[ "$first" == run_* || "$first" == once_* || "$first" == before_* || "$first" == after_* ]]; then
+        has_script=1
+        continue
+      fi
+      t="$(source_to_target "$rel")" || { has_script=1; continue; }
+      targets+=("$t")
+    done
+    if [ "$has_script" -eq 1 ]; then
+      echo "[WARN] la capa $layer contiene scripts; se reaplica completa."
+      echo "Aplicando capa: $layer"
+      chezmoi apply --source "$REPO_DIR/home/$layer"
+    elif [ "${#targets[@]}" -gt 0 ]; then
+      echo "Aplicando objetivos restaurados de la capa $layer: ${targets[*]}"
+      chezmoi apply --source "$REPO_DIR/home/$layer" "${targets[@]}"
+    fi
+  done <<< "$sorted_layers"
+else
+  echo "[WARN] chezmoi no instalado; se omitió la reaplicación de capas."
+fi
+
+# --- Resultado ---
+echo
+echo "Componente «$COMPONENT» restaurado a $ref."
+echo "Objetivos afectados:"
+printf '  %s\n' "${ref_paths[@]}"
+echo "Sugerencia: ejecuta scripts/verify para comprobar el estado."

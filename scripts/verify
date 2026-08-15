@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# scripts/verify — Verificación de SOLO LECTURA del estado de la máquina.
+# No modifica ninguna configuración; únicamente informa.
+#
+# Uso:
+#   scripts/verify [--profile NOMBRE] [--class desktop|laptop]
+#
+# Salida: una línea [PASS]/[FAIL]/[WARN] por chequeo y un estado final
+# "State: HEALTHY" (exit 0) o "State: DEGRADED" (exit 1).
+# Regla: cualquier FAIL => DEGRADED; los WARN por sí solos => HEALTHY.
+# Una herramienta ausente produce WARN, nunca FAIL.
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --- Resolución de perfil (misma lógica que bootstrap.sh y scripts/doctor) ---
+PROFILE_ARG=""
+CLASS_ARG=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --profile) PROFILE_ARG="${2:-}"; shift 2 2>/dev/null || true ;;
+    --class) CLASS_ARG="${2:-}"; shift 2 2>/dev/null || true ;;
+    *) shift ;;
+  esac
+done
+
+profile="${OMARCHY_PROFILE:-}"
+if [ -n "$PROFILE_ARG" ]; then profile="$PROFILE_ARG"; fi
+if [ -z "$profile" ]; then profile="$(hostname)"; fi
+
+machine_dir="$REPO_DIR/home/profiles/machines/$profile"
+class=""
+if [ -f "$machine_dir/dot_config/omarchy-assistant/class" ]; then
+  class="$(sed -n '1{s/^[[:space:]]*//;s/[[:space:]]*$//;p}' "$machine_dir/dot_config/omarchy-assistant/class")"
+fi
+if [ -z "$class" ]; then class="$CLASS_ARG"; fi
+if [ -z "$class" ]; then
+  echo "[FAIL] clase de dispositivo sin resolver para el perfil «$profile»: crea $machine_dir/dot_config/omarchy-assistant/class (una línea con «desktop» o «laptop») o pasa --class desktop|laptop"
+  echo
+  echo "State: DEGRADED"
+  exit 1
+fi
+
+layers=("common" "omarchy" "profiles/$class")
+if [ -d "$machine_dir" ]; then
+  layers+=("profiles/machines/$profile")
+else
+  echo "[WARN] no hay capa específica para esta máquina"
+fi
+
+degraded=0
+
+echo "Omarchy Assistant Verify"
+echo
+
+# --- chezmoi: binario presente + diff limpio por capa ---
+# Se compara la SALIDA del diff (vacía = limpio), no el código de salida.
+if command -v chezmoi >/dev/null 2>&1; then
+  clean=1
+  for layer in "${layers[@]}"; do
+    diff_out="$(chezmoi --source "$REPO_DIR/home/$layer" diff 2>/dev/null)" || true
+    if [ -n "$diff_out" ]; then
+      echo "[FAIL] chezmoi: diferencias en la capa $layer"
+      clean=0
+      degraded=1
+    fi
+  done
+  if [ "$clean" -eq 1 ]; then
+    echo "[PASS] chezmoi"
+  fi
+else
+  echo "[WARN] chezmoi no instalado"
+fi
+
+# --- fish: validación de sintaxis de los archivos aplicados, si existen ---
+# Los archivos inexistentes se omiten silenciosamente, no son FAIL.
+if command -v fish >/dev/null 2>&1; then
+  fish_ok=1
+  shopt -s nullglob
+  for f in "$HOME"/.config/fish/conf.d/*.fish "$HOME"/.config/fish/config.fish; do
+    [ -f "$f" ] || continue
+    if ! fish -n "$f" >/dev/null 2>&1; then
+      echo "[FAIL] fish syntax: $f"
+      fish_ok=0
+      degraded=1
+    fi
+  done
+  shopt -u nullglob
+  if [ "$fish_ok" -eq 1 ]; then
+    echo "[PASS] fish"
+  fi
+else
+  echo "[WARN] fish no instalado"
+fi
+
+# --- starship: valida la configuración activa ---
+if command -v starship >/dev/null 2>&1; then
+  if starship print-config >/dev/null 2>&1; then
+    echo "[PASS] starship"
+  else
+    echo "[FAIL] starship: la configuración activa no es válida"
+    degraded=1
+  fi
+else
+  echo "[WARN] starship no instalado"
+fi
+
+# --- ghostty: +show-config como validador nativo ---
+# Se comprueba primero que el flag exista en esta versión; si no existe,
+# es WARN ("sin validador disponible"), no FAIL.
+if command -v ghostty >/dev/null 2>&1; then
+  if ! ghostty +show-config --help >/dev/null 2>&1; then
+    echo "[WARN] ghostty (sin validador disponible en esta versión)"
+  elif ghostty +show-config >/dev/null 2>&1; then
+    echo "[PASS] ghostty"
+  else
+    echo "[FAIL] ghostty: configuración no válida"
+    degraded=1
+  fi
+else
+  echo "[WARN] ghostty no instalado"
+fi
+
+# --- hyprland: sin chequeo de sintaxis ficticio ---
+# Instalado y con el compositor en ejecución => PASS; en otro caso => WARN.
+if command -v hyprctl >/dev/null 2>&1; then
+  if hyprctl version >/dev/null 2>&1; then
+    echo "[PASS] hyprland (compositor en ejecución)"
+  else
+    echo "[WARN] hyprland (sin validación disponible)"
+  fi
+else
+  echo "[WARN] hyprland no instalado"
+fi
+
+# --- packages: manifiestos resueltos (common + clase + máquina) ---
+if command -v pacman >/dev/null 2>&1; then
+  pkg_files=("$REPO_DIR/packages/common.txt" "$REPO_DIR/packages/$class.txt")
+  if [ -f "$REPO_DIR/packages/machines/$profile.txt" ]; then
+    pkg_files+=("$REPO_DIR/packages/machines/$profile.txt")
+  fi
+  missing=()
+  while IFS= read -r pkg; do
+    [ -n "$pkg" ] || continue
+    if ! pacman -Q "$pkg" >/dev/null 2>&1; then
+      missing+=("$pkg")
+    fi
+  done < <(sed -e 's/#.*$//' -e '/^[[:space:]]*$/d' "${pkg_files[@]}" 2>/dev/null | sort -u)
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "[FAIL] packages faltantes: ${missing[*]}"
+    degraded=1
+  else
+    echo "[PASS] packages"
+  fi
+else
+  echo "[WARN] pacman no disponible"
+fi
+
+# --- higiene del repo: aviso si hay cambios locales, nunca FAIL ---
+if [ -n "$(git -C "$REPO_DIR" status --porcelain 2>/dev/null)" ]; then
+  echo "[WARN] configuración local sin trackear"
+else
+  echo "[PASS] repo"
+fi
+
+echo
+if [ "$degraded" -eq 1 ]; then
+  echo "State: DEGRADED"
+  exit 1
+fi
+echo "State: HEALTHY"
+exit 0

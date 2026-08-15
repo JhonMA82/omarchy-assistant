@@ -1,0 +1,12 @@
+# Archivos de registro
+*.log
+
+# Archivos temporales de editores
+*.swp
+*~
+
+# Basura de macOS
+.DS_Store
+
+# Registro local de skills (generado por gentle-ai; contiene rutas locales)
+.atl/

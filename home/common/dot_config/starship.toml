@@ -1,0 +1,19 @@
+# Configuración base de Starship — capa "common".
+# Línea de base compartida por todos los equipos; mantener minimalista.
+# Los ajustes específicos van en capas superiores (omarchy, desktop/laptop,
+# machines/<hostname>), que sobrescriben a esta.
+
+format = """
+$directory\
+$git_branch\
+$character"""
+
+[directory]
+truncation_length = 3
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[✗](bold red)"

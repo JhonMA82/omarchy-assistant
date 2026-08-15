@@ -1,0 +1,9 @@
+# Manifiesto de paquetes — capa "common".
+# Formato: un paquete por línea, repos oficiales de pacman.
+# bootstrap.sh y scripts/verify eliminan comentarios (#), líneas vacías
+# y duplicados (sort -u) antes de instalar o comprobar.
+# AUR está fuera del alcance de v0.1.
+
+ripgrep
+fd
+jq
