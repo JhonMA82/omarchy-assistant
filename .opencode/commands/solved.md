@@ -6,6 +6,8 @@ El usuario acaba de validar manualmente que una solución funciona y ejecutó `/
 
 ## 1. Inspeccionar
 
+Trabaja sobre el **delta de la sesión** (`git status`, `git diff`, `git diff --cached` y chezmoi status/diff por capa), no sobre el estado completo del repositorio. No releas la arquitectura, el árbol de `knowledge/` ni la infraestructura: el contexto de la sesión ya lo tienes; revisa únicamente los archivos relacionados con el delta.
+
 - Ejecuta `git status` y `git diff`.
 - Ejecuta, por cada capa en el orden canónico (common → omarchy → desktop|laptop → machines/<perfil>):
   - `chezmoi --source <repo>/home/<capa> status`
@@ -35,9 +37,28 @@ Si la solución requirió una aplicación instalada de forma persistente, agrég
 
 ## 5. Documentar
 
-Crea `knowledge/solved/YYYY-MM-DD-slug.md` (fecha de hoy, slug corto) con estos encabezados EXACTOS, en este orden:
+Antes de crear la entrada, busca duplicados de forma barata:
+
+```bash
+rg -l -i '<componente>|<palabras clave del problema>' knowledge/solved/
+```
+
+Si existe una entrada claramente equivalente, actualízala o enlázala desde la nueva entrada. No leas todos los resultados indiscriminadamente, ni el resto de `knowledge/`.
+
+Crea `knowledge/solved/YYYY-MM-DD-slug.md` (fecha de hoy, slug corto) con frontmatter ligero y estos encabezados EXACTOS, en este orden:
 
 ```markdown
+---
+component: starship
+scope: common
+machine: all
+tags:
+  - shell
+  - prompt
+  - performance
+commit: 8af29c1
+---
+
 # Título
 
 ## Problema
@@ -56,6 +77,8 @@ Crea `knowledge/solved/YYYY-MM-DD-slug.md` (fecha de hoy, slug corto) con estos 
 
 ## Git
 ```
+
+Campos de frontmatter opcionales si no aplican: `component`, `scope`, `machine`, `tags`, `commit`. Su propósito es permitir búsquedas baratas con `rg` (ejemplo: `rg -l 'component: starship' knowledge/solved/`). No agregues esquemas ni validadores de metadata.
 
 Documenta solo conocimiento útil y reutilizable. No copies conversaciones completas.
 
@@ -83,6 +106,7 @@ Haz push solo si existe remote configurado y el usuario ha establecido que este 
 
 - Hacer `git add -A` sin revisar.
 - Incluir cambios ajenos a la solución.
+- Releer todo el repositorio o recorrer `knowledge/` completo durante `/solved`: usa el delta de la sesión y la búsqueda dirigida.
 - Crear múltiples capas de abstracción ni scripts para configuraciones que chezmoi administra directamente.
 - Modificar internals de Omarchy sin necesidad.
 - Convertir cada solución en una nueva «feature».

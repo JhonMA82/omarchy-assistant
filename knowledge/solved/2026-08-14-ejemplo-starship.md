@@ -1,3 +1,14 @@
+---
+component: starship
+scope: common
+machine: all
+tags:
+  - shell
+  - prompt
+  - performance
+commit: "<hash>"
+---
+
 > Ejemplo de referencia: muestra el formato de una entrada de `knowledge/solved/`; no corresponde a una solución real.
 
 # Ejemplo: Starship lento por un comando personalizado

@@ -48,7 +48,7 @@ Inspección: `chezmoi --source "<repo>/home/<capa>" status` y `chezmoi --source 
 2. Clasificar el scope en una sola capa.
 3. Capturar solo el estado final necesario en la capa correcta, preferiblemente con chezmoi directo.
 4. Registrar paquetes en el manifiesto correcto, sin duplicados.
-5. Documentar en `knowledge/solved/YYYY-MM-DD-slug.md` con los encabezados exactos.
+5. Documentar en `knowledge/solved/YYYY-MM-DD-slug.md` con frontmatter ligero y los encabezados exactos; antes de crear la entrada, buscar duplicados con `rg -l` en `knowledge/solved/`.
 6. Verificar con `scripts/verify` y validadores nativos; no inventar validadores.
 7. Idempotencia en scripts (aplicar → verificar → aplicar → verificar).
 8. Commit pequeño con conventional commits; push solo si hay remote.
