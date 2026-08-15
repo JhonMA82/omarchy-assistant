@@ -7,3 +7,5 @@
 ripgrep
 fd
 jq
+# Shell por defecto (config en home/common/dot_config/fish/).
+fish
