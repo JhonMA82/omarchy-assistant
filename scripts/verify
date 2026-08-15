@@ -53,17 +53,56 @@ degraded=0
 echo "Omarchy Assistant Verify"
 echo
 
-# --- chezmoi: binario presente + diff limpio por capa ---
-# Se compara la SALIDA del diff (vacía = limpio), no el código de salida.
+# --- chezmoi: binario presente + estado efectivo final por capa ---
+# Modelo "estado efectivo final": cada target pertenece a la capa MÁS ALTA
+# que lo administra. Una capa inferior que comparte target con una superior
+# (superposición intencional, p. ej. dot_config/omarchy-assistant/profile)
+# NO debe reportar diferencias por el simple hecho de que la capa superior
+# lo sobrescribió; el target lo valida únicamente su dueña efectiva.
+# Se compara la SALIDA de `diff` por archivo (vacía = limpio), no el código
+# de salida; un error real de chezmoi (source inexistente, plantilla rota)
+# es FAIL, nunca un PASS silencioso.
 if command -v chezmoi >/dev/null 2>&1; then
   clean=1
-  for layer in "${layers[@]}"; do
-    diff_out="$(chezmoi --source "$REPO_DIR/home/$layer" diff 2>/dev/null)" || true
-    if [ -n "$diff_out" ]; then
-      echo "[FAIL] chezmoi: diferencias en la capa $layer"
+  layer_count="${#layers[@]}"
+  for ((i = 0; i < layer_count; i++)); do
+    layer="${layers[$i]}"
+    src="$REPO_DIR/home/$layer"
+    if [ ! -d "$src" ]; then
+      echo "[FAIL] chezmoi: no existe el source de la capa $layer ($src)"
       clean=0
       degraded=1
+      continue
     fi
+    if ! own_files="$(chezmoi --source "$src" managed --include files 2>&1)"; then
+      echo "[FAIL] chezmoi: no se pudo inspeccionar la capa $layer: $(printf '%s' "$own_files" | head -n 1)"
+      clean=0
+      degraded=1
+      continue
+    fi
+    # Targets que administran las capas superiores (superposición esperada).
+    higher_managed="$(for h in "${layers[@]:i+1}"; do
+      chezmoi --source "$REPO_DIR/home/$h" managed --include files 2>/dev/null
+    done | sort -u)"
+    layer_ok=1
+    while IFS= read -r target; do
+      [ -n "$target" ] || continue
+      if printf '%s\n' "$higher_managed" | grep -Fxq -- "$target"; then
+        continue  # superposición esperada: manda la capa superior
+      fi
+      if ! diff_out="$(chezmoi --source "$src" diff -- "$HOME/$target" 2>&1)"; then
+        echo "[FAIL] chezmoi: no se pudo inspeccionar $target en la capa $layer: $(printf '%s' "$diff_out" | head -n 1)"
+        layer_ok=0
+        degraded=1
+        continue
+      fi
+      if [ -n "$diff_out" ]; then
+        echo "[FAIL] chezmoi: diferencias en la capa $layer ($target)"
+        layer_ok=0
+        degraded=1
+      fi
+    done <<< "$own_files"
+    [ "$layer_ok" -eq 0 ] && clean=0
   done
   if [ "$clean" -eq 1 ]; then
     echo "[PASS] chezmoi"
