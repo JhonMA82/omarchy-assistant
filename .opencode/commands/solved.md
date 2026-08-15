@@ -4,6 +4,24 @@ description: Consolida la solución validada por el usuario en el estado reprodu
 
 El usuario acaba de validar manualmente que una solución funciona y ejecutó `/solved`. Consolida esa solución como estado reproducible conocido. Ejecuta los pasos en orden; no te saltes ninguno.
 
+## 0. Guard: chezmoi disponible (fail-closed)
+
+Antes de cualquier uso de chezmoi, comprueba que esté instalado:
+
+```bash
+command -v chezmoi
+```
+
+Si no existe, **DETENTE aquí** y muestra exactamente:
+
+```text
+Chezmoi no está disponible.
+No se puede validar el desired state.
+Ejecuta bootstrap o instala chezmoi y vuelve a ejecutar /solved.
+```
+
+En ese caso NO: marques known-good, afirmes que verify pasó, crees el commit final ni hagas push. Deja el working tree intacto para poder reintentarlo después.
+
 ## 1. Inspeccionar
 
 Trabaja sobre el **delta de la sesión** (`git status`, `git diff`, `git diff --cached` y chezmoi status/diff por capa), no sobre el estado completo del repositorio. No releas la arquitectura, el árbol de `knowledge/` ni la infraestructura: el contexto de la sesión ya lo tienes; revisa únicamente los archivos relacionados con el delta.
@@ -106,6 +124,7 @@ Haz push solo si existe remote configurado y el usuario ha establecido que este 
 
 - Hacer `git add -A` sin revisar.
 - Incluir cambios ajenos a la solución.
+- Consolidar (known-good, commit o push) cuando chezmoi no esté disponible: el guard del paso 0 lo impide.
 - Releer todo el repositorio o recorrer `knowledge/` completo durante `/solved`: usa el delta de la sesión y la búsqueda dirigida.
 - Crear múltiples capas de abstracción ni scripts para configuraciones que chezmoi administra directamente.
 - Modificar internals de Omarchy sin necesidad.
