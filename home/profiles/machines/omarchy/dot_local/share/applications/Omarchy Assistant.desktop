@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Omarchy Assistant
+Comment=Open Omarchy Assistant en opencode
+Exec=ghostty --working-directory=/home/juan/Dev/omarchy-assistant -e opencode
+Terminal=false
+Type=Application
+Icon=com.mitchellh.ghostty
+StartupNotify=true
