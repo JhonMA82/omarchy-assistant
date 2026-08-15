@@ -8,22 +8,24 @@ el versionado sigue [SemVer](https://semver.org/lang/es/).
 
 Sin cambios aún.
 
-## [0.1.0] - 2026-08-14
+## [0.2.0] - 2026-08-14
 
-Primera versión del proyecto: Omarchy Assistant v0.1, alineado al baseline
-Omarchy v4 (Quattro).
+Optimización de contexto v0.2: disciplina de contexto para reducir lecturas y tokens, y primera consolidación de soluciones (Fish y acceso directo).
 
 ### Añadido
 
-- Estructura mínima del repositorio definida en `OMARCHY_ASSISTANT_INITIAL_SPEC.md`.
-- Capas de chezmoi en orden canónico (common → omarchy → clase → máquina), con identificación por hostname y override vía `OMARCHY_PROFILE` / `--profile`.
-- `bootstrap.sh` idempotente: verifica Omarchy, instala chezmoi, resuelve perfil y clase, instala paquetes declarados, aplica las capas y ejecuta `scripts/verify`.
-- `scripts/verify` (solo lectura), `scripts/doctor` (diagnóstico) y `scripts/rollback` (retroceso por componente apoyado en Git).
-- Comando `/solved` de OpenCode para consolidar soluciones validadas.
-- Skills `omarchy-maintainer` y `workstation-state` alineadas a Omarchy v4 Quattro (Quickshell reemplaza a Waybar y Walker).
-- Knowledge base (`knowledge/solved/`) con plantilla y ejemplo de referencia.
-- Manifiestos de paquetes (`packages/`) con repos oficiales de pacman (AUR fuera del alcance de v0.1).
-- `README.md`, `AGENTS.md` y `.gitignore`.
+- Configuración de arranque de Fish compatible con Omarchy v4 en `home/common/dot_config/fish/config.fish`.
+- Acceso directo de escritorio que abre OpenCode en Ghostty dentro del repositorio, en `home/profiles/desktop/`.
+- Entradas de knowledge: `2026-08-14-fish-shell-default.md` y `2026-08-14-acceso-directo-opencode.md`.
+- Paquetes `fish` y `ghostty` registrados en los manifiestos (`packages/common.txt`, `packages/desktop.txt`).
 
-[Unreleased]: https://github.com/JhonMA82/omarchy-assistant/compare/v0.1.0...HEAD
+### Cambiado
+
+- `AGENTS.md`: nueva sección «Contexto bajo demanda» (no precargar el repositorio, search-before-read, `knowledge/` lazy, `bootstrap.sh` y scripts de infraestructura solo si la tarea los afecta, routing por componente y niveles de contexto).
+- `/solved` orientado al delta de la sesión: búsqueda de duplicados con `rg` antes de crear entradas y frontmatter ligero (`component`, `scope`, `machine`, `tags`, `commit`).
+- `README.md` documenta la disciplina de contexto.
+- Especificación v0.1 reemplazada por `OPENCODE_OMARCHY_ASSISTANT_V0.2_CONTEXT_OPTIMIZATION.md`.
+
+[Unreleased]: https://github.com/JhonMA82/omarchy-assistant/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/JhonMA82/omarchy-assistant/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JhonMA82/omarchy-assistant/releases/tag/v0.1.0
