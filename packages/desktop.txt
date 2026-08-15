@@ -1,3 +1,5 @@
 # Manifiesto de paquetes — clase "desktop".
 # Formato: un paquete por línea, repos oficiales de pacman; AUR fuera de alcance.
-# Se mantiene vacío hasta que exista una necesidad concreta.
+
+# Terminal usado por el acceso directo a opencode.
+ghostty
