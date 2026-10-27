@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=ThinkRail
+Comment=Revisión de código con agentes de IA, en el navegador
+Exec=thinkrail
+Terminal=false
+Type=Application
+Icon=thinkrail
+StartupNotify=true
