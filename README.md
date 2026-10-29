@@ -99,11 +99,11 @@ La única sobrescritura entre capas del mismo archivo es `dot_config/omarchy-ass
 ## Flujo diario
 
 ```text
-acceso directo → Ghostty → cd al repositorio → OpenCode → describir problema
+acceso directo → kitty → cd al repositorio → OpenCode → describir problema
 → OpenCode diagnostica → aplica cambios mínimos → pruebas → confirmas que funciona → /solved
 ```
 
-Mientras no ejecutes `/solved`, los cambios NO son estado validado. Puedes crear un acceso directo de escritorio que abra Ghostty, entre al repositorio y ejecute `opencode`.
+Mientras no ejecutes `/solved`, los cambios NO son estado validado. Puedes crear un acceso directo de escritorio que abra kitty, entre al repositorio y ejecute `opencode`.
 
 `/solved` consolida: inspecciona, clasifica el scope, actualiza el desired state con chezmoi, registra paquetes, documenta en `knowledge/solved/`, verifica, hace commit pequeño y push si hay remote.
 
@@ -149,7 +149,7 @@ scripts/rollback --commit <hash> <componente>
 scripts/rollback --dry-run <componente>
 ```
 
-Componentes: `fish starship ghostty hypr quickshell git opencode scripts`. El rollback nunca toca componentes ajenos al indicado.
+Componentes: `fish starship kitty hypr quickshell git opencode scripts`. El rollback nunca toca componentes ajenos al indicado.
 
 ## Verify y doctor
 

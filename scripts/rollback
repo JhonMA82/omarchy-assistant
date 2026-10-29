@@ -23,7 +23,7 @@ component_patterns() {
   case "$1" in
     fish)     printf '%s\n' 'home/**/dot_config/fish/**' ;;
     starship) printf '%s\n' 'home/**/starship*' ;;
-    ghostty)  printf '%s\n' 'home/**/dot_config/ghostty/**' ;;
+    kitty)    printf '%s\n' 'home/**/dot_config/kitty/**' 'home/**/dot_config/xdg-terminals.list' ;;
     hypr)     printf '%s\n' 'home/**/dot_config/hypr/**' ;;
     # v4 Quattro sustituye waybar/walker por el shell Quickshell.
     quickshell) printf '%s\n' 'home/**/dot_config/quickshell/**' 'home/**/dot_config/omarchy/**' ;;
@@ -42,7 +42,7 @@ Uso:
                                                        Muestra qué cambiaría sin cambiar nada.
 
 Componentes conocidos:
-  fish  starship  ghostty  hypr  quickshell  git  opencode  scripts
+  fish  starship  kitty  hypr  quickshell  git  opencode  scripts
 
 Restore (descartar cambios experimentales SIN consolidar, distinto de rollback):
   git checkout -- <rutas>
@@ -74,10 +74,10 @@ if [ -z "$COMPONENT" ]; then
 fi
 
 case "$COMPONENT" in
-  fish|starship|ghostty|hypr|quickshell|git|opencode|scripts) ;;
+  fish|starship|kitty|hypr|quickshell|git|opencode|scripts) ;;
   *)
     echo "Error: componente desconocido «$COMPONENT»." >&2
-    echo "Componentes conocidos: fish starship ghostty hypr quickshell git opencode scripts" >&2
+    echo "Componentes conocidos: fish starship kitty hypr quickshell git opencode scripts" >&2
     exit 1
     ;;
 esac

@@ -1,0 +1,5 @@
+# Terminal emulator preference order for xdg-terminal-exec
+# The first found and valid terminal will be used
+# Escrito por omarchy-default-terminal / omarchy-install-terminal; chezmoi es
+# la fuente de verdad. Super + Return y omarchy-launch-terminal lo respetan.
+kitty.desktop

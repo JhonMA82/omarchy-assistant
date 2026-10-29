@@ -1,5 +1,6 @@
 # Manifiesto de paquetes — clase "desktop".
 # Formato: un paquete por línea, repos oficiales de pacman; AUR fuera de alcance.
 
-# Terminal usado por el acceso directo a opencode.
-ghostty
+# Terminal por defecto del sistema (ver home/common/dot_config/xdg-terminals.list).
+# También la usan los lanzadores de opencode y herdr.
+kitty

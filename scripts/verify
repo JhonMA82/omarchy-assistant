@@ -144,20 +144,28 @@ else
   echo "[WARN] starship no instalado"
 fi
 
-# --- ghostty: +show-config como validador nativo ---
-# Se comprueba primero que el flag exista en esta versión; si no existe,
-# es WARN ("sin validador disponible"), no FAIL.
-if command -v ghostty >/dev/null 2>&1; then
-  if ! ghostty +show-config --help >/dev/null 2>&1; then
-    echo "[WARN] ghostty (sin validador disponible en esta versión)"
-  elif ghostty +show-config >/dev/null 2>&1; then
-    echo "[PASS] ghostty"
+# --- terminal por defecto: kitty ---
+# kitty no expone validador headless (sin +show-config ni flag equivalente:
+# `kitty --config <f>` intenta abrir ventana). Se limita a comprobar presencia;
+# no se inventa un validador ficticio => WARN, nunca FAIL.
+if command -v kitty >/dev/null 2>&1; then
+  echo "[WARN] kitty (sin validador nativo disponible)"
+else
+  echo "[FAIL] kitty: es el terminal por defecto y no está instalado"
+  degraded=1
+fi
+
+# xdg-terminals.list debe apuntar a kitty: es lo que respetan Super+Return
+# y omarchy-launch-terminal.
+if [ -f "$HOME/.config/xdg-terminals.list" ]; then
+  if grep -qx 'kitty.desktop' "$HOME/.config/xdg-terminals.list"; then
+    echo "[PASS] xdg-terminals.list (kitty como default)"
   else
-    echo "[FAIL] ghostty: configuración no válida"
+    echo "[FAIL] xdg-terminals.list: no prioriza kitty.desktop"
     degraded=1
   fi
 else
-  echo "[WARN] ghostty no instalado"
+  echo "[WARN] xdg-terminals.list no presente"
 fi
 
 # --- hyprland: sin chequeo de sintaxis ficticio ---
