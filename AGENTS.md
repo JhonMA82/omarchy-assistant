@@ -66,5 +66,6 @@ Inspección: `chezmoi --source "<repo>/home/<capa>" status` y `chezmoi --source 
 - Push antes de `/solved`.
 - Grandes refactors no solicitados.
 - Cambios fuera del problema.
+- `omarchy refresh hyprland` (y cualquier `omarchy refresh` sobre un componente que chezmoi administra): sobrescribe `~/.config/hypr/` con los defaults de Omarchy y descarta la capa del repo. Restaurar con `chezmoi apply --force --source "<repo>/home/profiles/machines/<perfil>"` y `hyprctl reload`. Ver `knowledge/solved/2026-09-28-omarchy-refresh-hyprland-resetea-monitores.md`.
 - Guardar credenciales o secretos (tokens, passwords, private keys, API keys, `.env` con secretos, claves SSH privadas).
 - `git add -A` sin revisar qué pertenece a la solución.
