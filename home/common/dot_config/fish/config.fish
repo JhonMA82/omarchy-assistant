@@ -10,3 +10,12 @@ if status is-interactive
         starship init fish | source
     end
 end
+
+# pnpm — bloque generado por el instalador oficial
+# (curl -fsSL https://get.pnpm.io/install.sh | sh -). Se conserva literal para
+# que chezmoi apply lo mantenga y para que reinstalarlo sea idempotente.
+set -gx PNPM_HOME '/home/juan/.local/share/pnpm'
+if test "$PATH[1]" != "$PNPM_HOME/bin"
+  set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+# pnpm end
