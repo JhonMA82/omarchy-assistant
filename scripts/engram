@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+# engram — Instalación, actualización y desinstalación de Engram
+# (https://github.com/Gentleman-Programming/engram).
+#
+# Uso:
+#   ./scripts/engram install            # instala la última release
+#   ./scripts/engram update             # actualiza a la última release
+#   ./scripts/engram uninstall          # elimina binario y datos
+#   ./scripts/engram status             # muestra versión instalada y disponible
+#
+# Opciones:
+#   --version TAG   Fuerza una release concreta (ej. v2.2.1) en vez de la última.
+#   --yes           No pedir confirmación en uninstall.
+#   --purge         En uninstall, borra también los datos persistentes.
+#   --prefix DIR    Destino de instalación (por defecto ~/.local/bin).
+#   --data-dir DIR  Directorio de datos de Engram (por defecto ~/.engram).
+#   --help          Muestra esta ayuda.
+#
+# Variables de entorno equivalentes: ENGRAM_VERSION, ENGRAM_PREFIX, ENGRAM_DATA_DIR.
+set -euo pipefail
+
+REPO="Gentleman-Programming/engram"
+API="https://api.github.com/repos/${REPO}"
+DL="https://github.com/${REPO}/releases/download"
+
+PREFIX="${ENGRAM_PREFIX:-$HOME/.local/bin}"
+DATA_DIR="${ENGRAM_DATA_DIR:-$HOME/.engram}"
+FORCE_VERSION="${ENGRAM_VERSION:-}"
+ASSUME_YES=0
+PURGE=0
+ACTION=""
+
+usage() { sed -n "2,$(($(grep -n '^set -euo' "${BASH_SOURCE[0]}" | head -1 | cut -d: -f1) - 1))p" "${BASH_SOURCE[0]}" | sed 's/^#\{1\} \{0,1\}//'; }
+
+info() { printf '[INFO] %s\n' "$*"; }
+ok()   { printf '[ OK ] %s\n' "$*"; }
+warn() { printf '[WARN] %s\n' "$*" >&2; }
+die()  { printf '[FAIL] %s\n' "$*" >&2; exit 1; }
+
+# --- Parseo de argumentos ---
+while [ $# -gt 0 ]; do
+  case "$1" in
+    install|update|uninstall|status) ACTION="$1"; shift ;;
+    --version)   FORCE_VERSION="${2:-}"; shift 2 ;;
+    --yes|-y)    ASSUME_YES=1; shift ;;
+    --purge)     PURGE=1; shift ;;
+    --prefix)    PREFIX="${2:-}"; shift 2 ;;
+    --data-dir)  DATA_DIR="${2:-}"; shift 2 ;;
+    --help|-h)   usage; exit 0 ;;
+    *) die "Opción desconocida: $1" ;;
+  esac
+done
+
+[ -n "$ACTION" ] || { usage; exit 1; }
+
+BIN="$PREFIX/engram"
+
+need_cmd() { command -v "$1" >/dev/null 2>&1 || die "falta la dependencia: $1"; }
+need_cmd curl
+need_cmd tar
+
+# --- Requisitos de plataforma ---
+# platform_asset TAG -> nombre del asset del release, p. ej. engram_2.2.1_linux_amd64.tar.gz
+platform_asset() {
+  local tag="$1" os arch
+  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64|amd64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *) die "arquitectura no soportada: $(uname -m)" ;;
+  esac
+  case "$os" in
+    linux|darwin) ;;
+    *) die "sistema operativo no soportado: $(uname -s)" ;;
+  esac
+  echo "engram_${tag#v}_${os}_${arch}.tar.gz"
+}
+
+# latest_tag: última release publicada (no prerelease).
+latest_tag() {
+  curl -fsSL -H 'Accept: application/vnd.github+json' "${API}/releases/latest" \
+    | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -1
+}
+
+target_tag() {
+  if [ -n "$FORCE_VERSION" ]; then
+    echo "$FORCE_VERSION"
+  else
+    latest_tag | grep -q . || die "no se pudo determinar la última release"
+    latest_tag
+  fi
+}
+
+installed_version() {
+  [ -x "$BIN" ] || return 0
+  "$BIN" --version 2>/dev/null | awk '{print $2}' | head -1
+}
+
+download_release() {
+  local tag="$1" asset outdir
+  asset="$(platform_asset "$tag")"
+  outdir="$(mktemp -d)"
+
+  info "descargando ${tag} (${asset})"
+  if ! curl -fsSL -o "${outdir}/${asset}" "${DL}/${tag}/${asset}"; then
+    rm -rf "$outdir"
+    die "falló la descarga de ${asset}"
+  fi
+  ok "descarga completa"
+
+  # Verificar checksum cuando el release publica checksums.txt.
+  if curl -fsSL -o "${outdir}/checksums.txt" "${DL}/${tag}/checksums.txt" 2>/dev/null; then
+    local sumline
+    sumline="$(awk -v f="$asset" '$NF == f { print $1 "  " $NF }' "${outdir}/checksums.txt")"
+    if [ -n "$sumline" ] && ( cd "$outdir" && printf '%s\n' "$sumline" | sha256sum -c - >/dev/null 2>&1 ); then
+      ok "checksum verificado"
+    else
+      rm -rf "$outdir"
+      die "checksum inválido o ausente para ${asset}"
+    fi
+  else
+    warn "el release no publica checksums.txt; se omite la verificación"
+  fi
+
+  if ! tar xzf "${outdir}/${asset}" -C "$outdir" engram; then
+    rm -rf "$outdir"
+    die "el tarball no contiene 'engram'"
+  fi
+  install -Dm755 "${outdir}/engram" "$BIN" || { rm -rf "$outdir"; die "no se pudo instalar en ${BIN}"; }
+  rm -rf "$outdir"
+}
+
+do_install() {
+  local tag current
+  current="$(installed_version)"
+  tag="$(target_tag)"
+
+  if [ -n "$current" ] && [ "$current" = "${tag#v}" ]; then
+    ok "engram ${current} ya instalado (última release)"
+    return 0
+  fi
+
+  info "instalando en ${BIN}"
+  download_release "$tag"
+  ok "engram $("$BIN" --version | awk '{print $2}') instalado en ${BIN}"
+  warn "si '${PREFIX}' no está en el PATH, añade: export PATH=\"${PREFIX}:\$PATH\""
+}
+
+do_update() {
+  local tag current
+  current="$(installed_version)"
+  [ -n "$current" ] || die "engram no está instalado; usa '$0 install'"
+  tag="$(target_tag)"
+
+  if [ "$current" = "${tag#v}" ]; then
+    ok "engram ${current} ya está en la última release"
+    return 0
+  fi
+
+  info "actualizando ${current} -> ${tag#v}"
+  download_release "$tag"
+  ok "engram $("$BIN" --version | awk '{print $2}') actualizado"
+}
+
+do_uninstall() {
+  local current
+  current="$(installed_version)"
+
+  if [ "$ASSUME_YES" -eq 0 ]; then
+    printf 'Eliminar engram %s de %s' "${current:-local}" "$BIN"
+    [ "$PURGE" -eq 1 ] && printf ' y los datos de %s' "$DATA_DIR"
+    printf '. ¿Continuar? [s/N] '
+    read -r reply
+    case "$reply" in
+      [sSyY]*) ;;
+      *) info "cancelado"; return 0 ;;
+    esac
+  fi
+
+  if [ -e "$BIN" ]; then
+    rm -f "$BIN"
+    ok "binario eliminado: ${BIN}"
+  else
+    info "no había binario en ${BIN}"
+  fi
+
+  if [ "$PURGE" -eq 1 ]; then
+    if [ -d "$DATA_DIR" ]; then
+      rm -rf "$DATA_DIR"
+      ok "datos eliminados: ${DATA_DIR}"
+    else
+      info "no había datos en ${DATA_DIR}"
+    fi
+  else
+    warn "datos conservados en ${DATA_DIR} (usa --purge para borrarlos)"
+  fi
+}
+
+do_status() {
+  local current tag
+  current="$(installed_version)"
+  if [ -n "$current" ]; then
+    printf 'instalado : %s (%s)\n' "$current" "$BIN"
+  else
+    printf 'instalado : no (%s)\n' "$BIN"
+  fi
+
+  if tag="$(target_tag)"; then
+    printf 'disponible: %s\n' "${tag#v}"
+    if [ -n "$current" ] && [ "$current" = "${tag#v}" ]; then
+      printf 'estado    : al día\n'
+    elif [ -n "$current" ]; then
+      printf 'estado    : hay actualización disponible\n'
+    fi
+  else
+    warn "no se pudo consultar la última release"
+  fi
+
+  [ -d "$DATA_DIR" ] && printf 'datos     : %s\n' "$DATA_DIR"
+  return 0
+}
+
+case "$ACTION" in
+  install)   do_install ;;
+  update)    do_update ;;
+  uninstall) do_uninstall ;;
+  status)    do_status ;;
+esac
