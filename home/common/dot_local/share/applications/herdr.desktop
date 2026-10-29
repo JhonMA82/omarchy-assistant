@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Herdr
+Comment=Gestor de workspaces de terminal para agentes de IA
+Exec=kitty -e herdr
+Terminal=false
+Type=Application
+Icon=herdr
+StartupNotify=true
