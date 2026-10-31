@@ -19,3 +19,11 @@ if test "$PATH[1]" != "$PNPM_HOME/bin"
   set -gx PATH "$PNPM_HOME/bin" $PATH
 end
 # pnpm end
+
+# bun — bloque generado por el instalador oficial (https://bun.sh/install).
+# Da acceso a bun y a los globals instalados con `bun add -g` (pi, omp).
+# Se conserva literal, como el de pnpm, para que chezmoi apply lo mantenga.
+# bun
+set --export BUN_INSTALL "$HOME/.bun"
+set --export PATH "$BUN_INSTALL/bin" $PATH
+# bun end
