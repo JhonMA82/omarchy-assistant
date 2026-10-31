@@ -1,0 +1,4 @@
+# Manifiesto de paquetes — máquina "omarchy".
+# Formato: un paquete por línea, repos oficiales de pacman; AUR fuera de alcance.
+# python3: omadeck-update-swap-icon (icono dinámico de la tecla Swap de la Stream Deck).
+python
