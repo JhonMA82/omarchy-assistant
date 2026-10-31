@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Sincroniza el icono de las teclas Swap de omadeck con el monitor enfocado.
+
+Uso: omadeck-update-swap-icon [MONITOR]
+
+Sin argumento consulta el monitor enfocado con hyprctl. Solo reescribe
+config.toml si el icono realmente cambia (evita recargas en bucle) y nunca
+toca un archivo que no parsea (edición en curso desde la app).
+"""
+import json
+import os
+import subprocess
+import sys
+import tomllib
+
+CONFIG = os.path.expanduser("~/.config/omadeck/config.toml")
+ICONS = {
+    "DP-1": "icons/monitor-landscape.svg",      # Lenovo, apaisado
+    "HDMI-A-1": "icons/monitor-portrait.svg",   # Dell, vertical
+}
+
+
+def focused_monitor(arg):
+    if arg:
+        return arg
+    try:
+        out = subprocess.check_output(
+            ["hyprctl", "monitors", "-j"], text=True, timeout=5
+        )
+    except Exception:
+        return None
+    for m in json.loads(out):
+        if m.get("focused"):
+            return m["name"]
+    return None
+
+
+def main():
+    monitor = focused_monitor(sys.argv[1] if len(sys.argv) > 1 else None)
+    icon = ICONS.get(monitor or "")
+    if icon is None:
+        return 0  # monitor desconocido: no tocar el config
+
+    try:
+        with open(CONFIG, encoding="utf-8") as f:
+            src = f.read()
+        tomllib.loads(src)
+    except Exception:
+        return 0  # config roto o ilegible: lo está editando alguien
+
+    lines = src.splitlines(keepends=True)
+    starts = [
+        i for i, l in enumerate(lines)
+        if l.startswith("[[key]]") or l.startswith("[[page.key]]")
+    ]
+    out = list(lines)
+    changed = False
+    for n, s in enumerate(starts):
+        e = starts[n + 1] if n + 1 < len(starts) else len(lines)
+        block = lines[s:e]
+        if not any("omadeck-toggle-monitor" in l for l in block):
+            continue  # solo las teclas Swap (las que ejecutan el toggle)
+        icon_line = 'icon = "%s"\n' % icon
+        idx = next((i for i, l in enumerate(block) if l.startswith("icon = ")), None)
+        if idx is not None:
+            if block[idx] == icon_line:
+                continue  # ya correcto: no escribir (sin recarga)
+            block[idx] = icon_line
+        else:
+            anchors = [
+                i for i, l in enumerate(block)
+                if l.startswith(("label = ", "glyph = ", "show_label = "))
+            ]
+            if not anchors:
+                continue
+            block.insert(max(anchors) + 1, icon_line)
+        out[s:e] = block
+        changed = True
+
+    if not changed:
+        return 0
+
+    new_src = "".join(out)
+    try:
+        tomllib.loads(new_src)
+    except Exception:
+        return 1
+    with open(CONFIG, "w", encoding="utf-8") as f:
+        f.write(new_src)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

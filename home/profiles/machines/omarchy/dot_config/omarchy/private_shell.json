@@ -35,6 +35,12 @@
           "id": "omarchy.tray"
         },
         {
+          "id": "dev.omadeck"
+        },
+        {
+          "id": "io.github.fieldnote-ops.harnessbar"
+        },
+        {
           "id": "omarchy.agents"
         },
         {
@@ -52,7 +58,10 @@
         {
           "id": "omarchy.power"
         }
-      ]
+      ],
+      "centerBegin": [],
+      "centerEnd": [],
+      "tray": []
     },
     "position": "top",
     "transparent": true

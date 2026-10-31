@@ -1,0 +1,351 @@
+# omadeck configuration - edit by hand or with the `omadeck` app.
+
+brightness = 70
+
+[style]
+follow_theme = true
+
+[[key]]
+index = 0
+label = "Monitors"
+icon = "icons/monitor-duo.svg"
+
+[key.action]
+type = "page"
+page = "Monitors"
+
+[[key]]
+index = 2
+label = "Files"
+icon = "icons/org.gnome.nautilus.png"
+
+[key.action]
+type = "app"
+command = "omarchy launch nautilus"
+
+[[key]]
+index = 3
+label = "Screenshot"
+icon = "icons/applets-screenshooter.png"
+
+[key.action]
+type = "app"
+command = "omarchy capture screenshot"
+
+[[key]]
+index = 4
+label = "Omarchy"
+icon = "/usr/share/pixmaps/omarchy.png"
+
+[key.action]
+type = "url"
+url = "https://omarchy.org"
+
+[[key]]
+index = 5
+label = "kitty"
+icon = "icons/kitty.png"
+
+[key.action]
+type = "app"
+command = "kitty.desktop"
+
+[[key]]
+index = 6
+label = "Browser"
+icon = "icons/web-browser.png"
+
+[key.action]
+type = "app"
+command = "omarchy launch browser"
+
+[[key]]
+index = 7
+label = "Swap Mon"
+glyph = "󰢹"
+icon = "icons/monitor-landscape.svg"
+
+[key.action]
+type = "script"
+path = "/home/juan/.local/bin/omadeck-toggle-monitor"
+
+[[key]]
+index = 10
+label = "Mute"
+glyph = "󰝟"
+
+[key.action]
+type = "app"
+command = "omarchy audio output volume mute-toggle"
+
+[[key]]
+index = 11
+label = "Night light"
+glyph = "󰖔"
+
+[key.action]
+type = "app"
+command = "omarchy toggle nightlight"
+
+[[key]]
+index = 12
+label = "Wallpaper"
+icon = "icons/preferences-desktop-wallpaper.png"
+
+[key.action]
+type = "app"
+command = "omarchy theme bg next"
+
+[[key]]
+index = 13
+label = "Ding!"
+icon = "icons/audio-x-generic.png"
+
+[key.action]
+type = "sound"
+file = "/usr/share/sounds/freedesktop/stereo/complete.oga"
+
+[[key]]
+index = 14
+label = "Next"
+icon = "icons/turnright-neo-black-classic-solid.png"
+
+[key.action]
+type = "page"
+page = "AI"
+
+[[page]]
+name = "AI"
+
+[[page.key]]
+index = 0
+label = "Back"
+glyph = "󰁍"
+
+[page.key.action]
+type = "back"
+
+[[page.key]]
+index = 1
+label = "Zen Browser"
+icon = "icons/zen.png"
+
+[page.key.action]
+type = "app"
+command = "zen.desktop"
+
+[[page.key]]
+index = 2
+label = "Youtube"
+icon = "icons/www.youtube.com.png"
+
+[page.key.action]
+type = "url"
+url = "www.youtube.com"
+
+[[page.key]]
+index = 3
+label = "Chatgpt"
+icon = "icons/chatgpt.png"
+
+[page.key.action]
+type = "url"
+url = "www.chatgpt.com"
+
+[[page.key]]
+index = 5
+label = "Gemini"
+icon = "icons/gemini.google.com.png"
+
+[page.key.action]
+type = "url"
+url = "https://gemini.google.com/"
+
+[page.key.on_release]
+type = "hyprland"
+dispatch = ""
+
+[[page.key]]
+index = 6
+label = "Meta"
+icon = "icons/www.meta.ai.png"
+
+[page.key.action]
+type = "url"
+url = "www.meta.ai"
+
+[[page.key]]
+index = 14
+
+[page.key.action]
+type = "hyprland"
+dispatch = "wtype -M win -d 80 f -m win"
+
+[[page]]
+name = "Dev"
+
+[[page.key]]
+index = 0
+label = "Back"
+glyph = "󰁍"
+
+[page.key.action]
+type = "back"
+
+[[page.key]]
+index = 1
+label = "/Dev"
+show_label = false
+icon = "icons/terminal-neo-black-classic-solid.png"
+
+[page.key.action]
+type = "app"
+command = "kitty --working-directory=/home/juan/Dev -e fish"
+
+[[page]]
+name = "Monitors"
+
+[[page.key]]
+index = 0
+label = "1"
+show_label = false
+icon = "icons/one-circle-fill-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'o.workspaces.focus(1)'
+
+[[page.key]]
+index = 1
+label = "2"
+show_label = false
+icon = "icons/two-circle-fill-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'o.workspaces.focus(2)'
+
+[[page.key]]
+index = 2
+label = "3"
+show_label = false
+icon = "icons/three-circle-fill-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'o.workspaces.focus(3)'
+
+[[page.key]]
+index = 3
+label = "4"
+show_label = false
+icon = "icons/four-circle-fill-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'o.workspaces.focus(4)'
+
+[[page.key]]
+index = 4
+label = "5"
+show_label = false
+icon = "icons/five-circle-fill-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'o.workspaces.focus(5)'
+
+[[page.key]]
+index = 5
+label = "Max"
+show_label = false
+icon = "icons/maximize-square-minimalistic-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'hl.dsp.window.fullscreen({ mode = "fullscreen" })'
+
+[[page.key]]
+index = 6
+label = "Close"
+show_label = false
+icon = "icons/close-square-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = "hl.dsp.window.close()"
+
+[[page.key]]
+index = 7
+label = "Float"
+show_label = false
+icon = "icons/windows-svgrepo-com.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'hl.dsp.window.float({ action = "toggle" })'
+
+[[page.key]]
+index = 8
+label = "Prev"
+show_label = false
+icon = "icons/prev-svgrepo-com-2.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = "hl.dsp.window.cycle_next({ next = false })"
+
+[[page.key]]
+index = 9
+label = "Next"
+show_label = false
+icon = "icons/next-svgrepo-com-2.svg"
+
+[page.key.action]
+type = "hyprland"
+dispatch = "hl.dsp.window.cycle_next()"
+
+[[page.key]]
+index = 10
+label = "Width"
+glyph = "󰐗"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'hl.dsp.window.fullscreen({ mode = "maximized" })'
+
+[[page.key]]
+index = 11
+label = "Pseudo"
+glyph = "󰉉"
+
+[page.key.action]
+type = "hyprland"
+dispatch = "hl.dsp.window.pseudo()"
+
+[[page.key]]
+index = 12
+label = "Scratch"
+glyph = "󰆍"
+
+[page.key.action]
+type = "hyprland"
+dispatch = 'hl.dsp.workspace.toggle_special("scratchpad")'
+
+[[page.key]]
+index = 13
+label = "Swap"
+glyph = "󰢹"
+icon = "icons/monitor-landscape.svg"
+
+[page.key.action]
+type = "script"
+path = "/home/juan/.local/bin/omadeck-toggle-monitor"
+
+[[page.key]]
+index = 14
+label = "Back"
+glyph = "󰁍"
+
+[page.key.action]
+type = "back"

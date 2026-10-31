@@ -1,0 +1,8 @@
+#!/bin/sh
+# Alterna el foco entre los dos monitores: cada pulsación enfoca el que no está enfocado.
+focused=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name')
+case "$focused" in
+  DP-1) target="HDMI-A-1" ;;
+  *)    target="DP-1" ;;
+esac
+hyprctl dispatch "hl.dsp.focus({ monitor = \"$target\" })"

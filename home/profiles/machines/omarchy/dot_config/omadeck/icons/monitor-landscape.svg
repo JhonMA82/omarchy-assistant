@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Monitor apaisado (Lenovo 4K) -->
+  <rect x="10" y="26" width="108" height="66" rx="6" fill="none" stroke="#ffffff" stroke-width="6"/>
+  <rect x="20" y="36" width="88" height="46" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="52" y="92" width="24" height="12" fill="#ffffff"/>
+  <rect x="38" y="104" width="52" height="8" rx="4" fill="#ffffff"/>
+</svg>
