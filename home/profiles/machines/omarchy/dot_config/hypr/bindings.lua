@@ -27,3 +27,16 @@
 -- o.bind("SUPER + SHIFT + S", nil, "omarchy-capture-screenshot")
 -- o.bind("SUPER + H", nil, "voxtype record toggle")
 -- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
+
+-- Dictation keys from before Alt + Space and Right Alt became the defaults.
+-- Remove these lines to give the keys back to applications.
+if o.dictation_installed and o.dictation_installed() then
+  o.bind("SUPER + CTRL + X", "Toggle dictation", "omarchy-dictation toggle")
+  o.bind_hold("F9", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop")
+end
+
+-- Hex (anomalyco/hex): en Hyprland el portal GlobalShortcuts no asigna teclas,
+-- asi que se enlazan los comandos del CLI directamente (push-to-talk).
+-- Sin Alt: Hyprland deja pasar Alt a la ventana enfocada y el pegado termina
+-- en el menu de la aplicacion en vez de en el campo de texto.
+o.bind_hold("SUPER + CTRL + X", "Iniciar dictado (Hex)", "/home/juan/Downloads/hex dictation start", "Detener dictado (Hex)", "/home/juan/Downloads/hex dictation stop")
