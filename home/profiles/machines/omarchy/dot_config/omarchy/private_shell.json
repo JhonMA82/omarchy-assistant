@@ -60,15 +60,26 @@
         }
       ],
       "centerBegin": [],
-      "centerEnd": [],
-      "tray": []
+      "centerEnd": [
+        {
+          "id": "io.github.elevate08.qs-bitwarden-cli",
+          "twoFactorMethods": {
+            "c2bae6b5394191d8d57ed246101ce704f6301a0ce48109e0c8ba6378aea5df8e": 0
+          }
+        }
+      ],
+      "tray": [
+        {
+          "id": "xyzlab.omafile"
+        }
+      ]
     },
     "position": "top",
     "transparent": true
   },
   "idle": {
-    "lock": 600,
-    "screensaver": 600
+    "lock": 4200,
+    "screensaver": 4200
   },
   "plugins": [],
   "version": 1
