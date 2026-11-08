@@ -1,6 +1,6 @@
 # omadeck configuration - edit by hand or with the `omadeck` app.
 
-brightness = 70
+brightness = 52
 
 [style]
 follow_theme = true
@@ -8,6 +8,7 @@ follow_theme = true
 [[key]]
 index = 0
 label = "Monitors"
+show_label = false
 icon = "icons/monitor-duo.svg"
 
 [key.action]
@@ -15,8 +16,19 @@ type = "page"
 page = "Monitors"
 
 [[key]]
+index = 1
+label = "Browser"
+show_label = false
+icon = "icons/zen-browser.svg"
+
+[key.action]
+type = "app"
+command = "omarchy launch browser"
+
+[[key]]
 index = 2
 label = "Files"
+show_label = false
 icon = "icons/org.gnome.nautilus.png"
 
 [key.action]
@@ -26,20 +38,12 @@ command = "omarchy launch nautilus"
 [[key]]
 index = 3
 label = "Screenshot"
+show_label = false
 icon = "icons/applets-screenshooter.png"
 
 [key.action]
 type = "app"
 command = "omarchy capture screenshot"
-
-[[key]]
-index = 4
-label = "Omarchy"
-icon = "/usr/share/pixmaps/omarchy.png"
-
-[key.action]
-type = "url"
-url = "https://omarchy.org"
 
 [[key]]
 index = 5
@@ -48,26 +52,29 @@ icon = "icons/kitty.png"
 
 [key.action]
 type = "app"
-command = "kitty.desktop"
+command = "kitty --working-directory=/home/juan/Dev"
 
 [[key]]
-index = 6
-label = "Browser"
-icon = "icons/web-browser.png"
+index = 8
+label = "Herdr"
+icon = "icons/herdr-app.svg"
+
+[key.action]
+type = "page"
+page = "Herdr"
+
+[[key]]
+index = 9
+label = "Dictado"
+glyph = "󰍬"
 
 [key.action]
 type = "app"
-command = "omarchy launch browser"
+command = "/home/juan/Downloads/hex dictation start"
 
-[[key]]
-index = 7
-label = "Swap Mon"
-glyph = "󰢹"
-icon = "icons/monitor-landscape.svg"
-
-[key.action]
-type = "script"
-path = "/home/juan/.local/bin/omadeck-toggle-monitor"
+[key.on_release]
+type = "app"
+command = "/home/juan/Downloads/hex dictation stop"
 
 [[key]]
 index = 10
@@ -119,24 +126,8 @@ name = "AI"
 
 [[page.key]]
 index = 0
-label = "Back"
-glyph = "󰁍"
-
-[page.key.action]
-type = "back"
-
-[[page.key]]
-index = 1
-label = "Zen Browser"
-icon = "icons/zen.png"
-
-[page.key.action]
-type = "app"
-command = "zen.desktop"
-
-[[page.key]]
-index = 2
 label = "Youtube"
+show_label = false
 icon = "icons/www.youtube.com.png"
 
 [page.key.action]
@@ -144,8 +135,9 @@ type = "url"
 url = "www.youtube.com"
 
 [[page.key]]
-index = 3
+index = 1
 label = "Chatgpt"
+show_label = false
 icon = "icons/chatgpt.png"
 
 [page.key.action]
@@ -153,8 +145,19 @@ type = "url"
 url = "www.chatgpt.com"
 
 [[page.key]]
-index = 5
+index = 2
+label = "Meta"
+show_label = false
+icon = "icons/www.meta.ai.png"
+
+[page.key.action]
+type = "url"
+url = "www.meta.ai"
+
+[[page.key]]
+index = 3
 label = "Gemini"
+show_label = false
 icon = "icons/gemini.google.com.png"
 
 [page.key.action]
@@ -166,20 +169,45 @@ type = "hyprland"
 dispatch = ""
 
 [[page.key]]
-index = 6
-label = "Meta"
-icon = "icons/www.meta.ai.png"
+index = 4
+label = "Zen Browser"
+show_label = false
+icon = "icons/zen.png"
+
+[page.key.action]
+type = "app"
+command = "zen.desktop"
+
+[[page.key]]
+index = 5
+label = "Github"
+show_label = false
+icon = "icons/www.github.com.svg"
+background = "#ffffff"
 
 [page.key.action]
 type = "url"
-url = "www.meta.ai"
+url = "www.github.com"
+
+[[page.key]]
+index = 6
+label = "Herdr"
+show_label = false
+icon = "icons/herdr-app.svg"
+
+[page.key.action]
+type = "app"
+command = "herdr-app.desktop"
 
 [[page.key]]
 index = 14
+label = "Back"
+show_label = false
+icon = "icons/back-square-svgrepo-com.svg"
+glyph = "󰁍"
 
 [page.key.action]
-type = "hyprland"
-dispatch = "wtype -M win -d 80 f -m win"
+type = "back"
 
 [[page]]
 name = "Dev"
@@ -202,6 +230,16 @@ icon = "icons/terminal-neo-black-classic-solid.png"
 type = "app"
 command = "kitty --working-directory=/home/juan/Dev -e fish"
 
+[[page.key]]
+index = 2
+label = "Herdr"
+show_label = false
+icon = "icons/herdr-app.svg"
+
+[page.key.action]
+type = "app"
+command = "herdr-app.desktop"
+
 [[page]]
 name = "Monitors"
 
@@ -213,7 +251,7 @@ icon = "icons/one-circle-fill-svgrepo-com.svg"
 
 [page.key.action]
 type = "hyprland"
-dispatch = 'o.workspaces.focus(1)'
+dispatch = "o.workspaces.focus(1)"
 
 [[page.key]]
 index = 1
@@ -223,7 +261,7 @@ icon = "icons/two-circle-fill-svgrepo-com.svg"
 
 [page.key.action]
 type = "hyprland"
-dispatch = 'o.workspaces.focus(2)'
+dispatch = "o.workspaces.focus(2)"
 
 [[page.key]]
 index = 2
@@ -233,7 +271,7 @@ icon = "icons/three-circle-fill-svgrepo-com.svg"
 
 [page.key.action]
 type = "hyprland"
-dispatch = 'o.workspaces.focus(3)'
+dispatch = "o.workspaces.focus(3)"
 
 [[page.key]]
 index = 3
@@ -243,7 +281,7 @@ icon = "icons/four-circle-fill-svgrepo-com.svg"
 
 [page.key.action]
 type = "hyprland"
-dispatch = 'o.workspaces.focus(4)'
+dispatch = "o.workspaces.focus(4)"
 
 [[page.key]]
 index = 4
@@ -253,7 +291,7 @@ icon = "icons/five-circle-fill-svgrepo-com.svg"
 
 [page.key.action]
 type = "hyprland"
-dispatch = 'o.workspaces.focus(5)'
+dispatch = "o.workspaces.focus(5)"
 
 [[page.key]]
 index = 5
@@ -326,17 +364,18 @@ dispatch = "hl.dsp.window.pseudo()"
 [[page.key]]
 index = 12
 label = "Scratch"
+show_label = false
 glyph = "󰆍"
 
 [page.key.action]
 type = "hyprland"
-dispatch = 'hl.dsp.workspace.toggle_special("scratchpad")'
+dispatch = 'hl.dsp.window.move({ workspace = "+1", follow = true })'
 
 [[page.key]]
 index = 13
 label = "Swap"
-glyph = "󰢹"
 icon = "icons/monitor-landscape.svg"
+glyph = "󰢹"
 
 [page.key.action]
 type = "script"
@@ -349,3 +388,126 @@ glyph = "󰁍"
 
 [page.key.action]
 type = "back"
+
+[[page]]
+name = "Herdr"
+
+[[page.key]]
+index = 0
+label = "Back"
+glyph = "󰁍"
+
+[page.key.action]
+type = "back"
+
+[[page.key]]
+index = 1
+label = "New tab"
+
+[page.key.action]
+type = "app"
+command = "herdr tab create --focus"
+
+[[page.key]]
+index = 2
+label = "Split →"
+
+[page.key.action]
+type = "app"
+command = "herdr pane split --direction right --current"
+
+[[page.key]]
+index = 3
+label = "Split ↓"
+
+[page.key.action]
+type = "app"
+command = "herdr pane split --direction down --current"
+
+[[page.key]]
+index = 4
+label = "Zoom"
+
+[page.key.action]
+type = "app"
+command = "herdr pane zoom --current"
+
+[[page.key]]
+index = 5
+label = "←"
+
+[page.key.action]
+type = "app"
+command = "herdr pane focus --direction left --current"
+
+[[page.key]]
+index = 6
+label = "↓"
+
+[page.key.action]
+type = "app"
+command = "herdr pane focus --direction down --current"
+
+[[page.key]]
+index = 7
+label = "↑"
+
+[page.key.action]
+type = "app"
+command = "herdr pane focus --direction up --current"
+
+[[page.key]]
+index = 8
+label = "→"
+
+[page.key.action]
+type = "app"
+command = "herdr pane focus --direction right --current"
+
+[[page.key]]
+index = 9
+label = "Close pane"
+
+[page.key.action]
+type = "app"
+command = "herdr pane current | jq -r .result.pane.pane_id | xargs -r herdr pane close"
+
+[[page.key]]
+index = 10
+label = "Prev tab"
+
+[page.key.action]
+type = "app"
+command = "herdr tab list | jq -r '.result.tabs as $t | ($t | map(.focused) | index(true)) as $i | ($t | length) as $n | $t[(($i - 1 + $n) % $n)].tab_id' | xargs -r herdr tab focus"
+
+[[page.key]]
+index = 11
+label = "Next tab"
+
+[page.key.action]
+type = "app"
+command = "herdr tab list | jq -r '.result.tabs as $t | ($t | map(.focused) | index(true)) as $i | ($t | length) as $n | $t[(($i + 1) % $n)].tab_id' | xargs -r herdr tab focus"
+
+[[page.key]]
+index = 12
+label = "New ws"
+
+[page.key.action]
+type = "app"
+command = "herdr workspace create --focus"
+
+[[page.key]]
+index = 13
+label = "Close tab"
+
+[page.key.action]
+type = "app"
+command = "herdr tab list | jq -r '.result.tabs[] | select(.focused) | .tab_id' | xargs -r herdr tab close"
+
+[[page.key]]
+index = 14
+label = "Detach"
+
+[page.key.action]
+type = "app"
+command = "wtype -M ctrl -k space -m ctrl -k d"
