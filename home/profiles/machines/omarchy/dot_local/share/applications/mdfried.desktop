@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=mdfried
+Comment=Markdown viewer for the terminal
+Exec=mdfried %f
+TryExec=mdfried
+Terminal=true
+Icon=text-x-generic
+MimeType=text/markdown;
+Categories=Office;Viewer;
+StartupNotify=true
